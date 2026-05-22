@@ -1,0 +1,117 @@
+{
+  "entities": {
+    "Student": {
+      "title": "Student",
+      "description": "Student master data containing basic identification and total violation points",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the student (NISN)" },
+        "nisn": { "type": "string", "description": "National Student ID number" },
+        "name": { "type": "string", "description": "Full name of the student" },
+        "gender": { "type": "string", "enum": ["L", "P"], "description": "Gender: L (Laki-laki) or P (Perempuan)" },
+        "studentClass": { "type": "string", "description": "A class from pre-defined list like VII-A, VIII-B, etc." },
+        "phone": { "type": "string", "description": "Student or primary contact telephone number" },
+        "parentPhone": { "type": "string", "description": "Parent/guardian telephone number for notifications" },
+        "points": { "type": "number", "description": "Aggregated violation points count" }
+      },
+      "required": ["id", "nisn", "name", "gender", "studentClass", "phone", "parentPhone", "points"]
+    },
+    "ViolationType": {
+      "title": "ViolationType",
+      "description": "Master reference database of violation types and their default point weights",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID of the violation rule" },
+        "name": { "type": "string", "description": "Detailed description of the behavioral violation" },
+        "points": { "type": "number", "description": "Point penalty value for this violation" }
+      },
+      "required": ["id", "name", "points"]
+    },
+    "PointHistory": {
+      "title": "PointHistory",
+      "description": "Immutable log entry tracking a single student point change transaction",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique transaction ID" },
+        "studentId": { "type": "string", "description": "Reference ID for the student" },
+        "type": { "type": "string", "enum": ["VIOLATION", "REWARD", "ADJUSTMENT"], "description": "Transaction category" },
+        "description": { "type": "string", "description": "Detailed description/reason for the point change" },
+        "pointsChanged": { "type": "number", "description": "Points value added (or subtracted if negative)" },
+        "date": { "type": "string", "format": "date", "description": "Execution date (YYYY-MM-DD)" }
+      },
+      "required": ["id", "studentId", "type", "description", "pointsChanged", "date"]
+    },
+    "NeedAssessment": {
+      "title": "NeedAssessment",
+      "description": "Student need assessment test metrics across 4 key dimensions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique key identifier" },
+        "studentId": { "type": "string", "description": "Reference ID of the student" },
+        "date": { "type": "string", "format": "date", "description": "Assessment assessment date (YYYY-MM-DD)" },
+        "personalScore": { "type": "number", "description": "Personal maturity score (0-100)" },
+        "socialScore": { "type": "number", "description": "Social development score (0-100)" },
+        "academicScore": { "type": "number", "description": "Academic readiness score (0-100)" },
+        "careerScore": { "type": "number", "description": "Career interest/motivation score (0-100)" },
+        "notes": { "type": "string", "description": "Analysis comments or diagnostic remarks by BK counselor" },
+        "category": { "type": "string", "enum": ["Ringan", "Sedang", "Sangat Butuh Bantuan"], "description": "Aggregated guidance urgency class" }
+      },
+      "required": ["id", "studentId", "date", "personalScore", "socialScore", "academicScore", "careerScore", "notes", "category"]
+    },
+    "CounselingLog": {
+      "title": "CounselingLog",
+      "description": "Confidential BK counseling case session report",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Chronological unique log entry ID" },
+        "studentId": { "type": "string", "description": "Student record key reference" },
+        "date": { "type": "string", "format": "date", "description": "Counseling date (YYYY-MM-DD)" },
+        "counselorName": { "type": "string", "description": "Full name of the counselor conducting the session" },
+        "type": { "type": "string", "enum": ["Individu", "Kelompok", "Klasikal", "Lainnya"], "description": "Treatment setting" },
+        "issue": { "type": "string", "description": "Description of the student issues or problems" },
+        "solution": { "type": "string", "description": "Action plans, resolutions, or treatment solutions" },
+        "evaluation": { "type": "string", "description": "Post-session audit, progress evaluation details" },
+        "status": { "type": "string", "enum": ["Selesai", "Dalam Pemantauan", "Perlu Rujukan"], "description": "Current case closure standing" }
+      },
+      "required": ["id", "studentId", "date", "counselorName", "type", "issue", "solution", "evaluation", "status"]
+    },
+    "SystemSettings": {
+      "title": "SystemSettings",
+      "description": "Global layout settings configuration document",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Main document ID (default: config)" },
+        "counselors": { "type": "array", "description": "List of active counseling educators in school" },
+        "principalName": { "type": "string", "description": "Name of the acting school principal" },
+        "wakaKesiswaanName": { "type": "string", "description": "Name of the Vice Principal in Student Affairs" }
+      },
+      "required": ["id", "counselors", "principalName", "wakaKesiswaanName"]
+    }
+  },
+  "firestore": {
+    "/students/{studentId}": {
+      "schema": "Student",
+      "description": "Collection housing registered student profile cards"
+    },
+    "/violationTypes/{violationId}": {
+      "schema": "ViolationType",
+      "description": "Reference catalog mapping violation categories to standard point adjustments"
+    },
+    "/pointHistory/{historyId}": {
+      "schema": "PointHistory",
+      "description": "Transaction entries recording historic increment and reductions of student points"
+    },
+    "/needAssessments/{assessmentId}": {
+      "schema": "NeedAssessment",
+      "description": "Recorded diagnostic need assessments profiles for counselling guidance"
+    },
+    "/counselingLogs/{logId}": {
+      "schema": "CounselingLog",
+      "description": "Recorded counseling files with counselor reflections and progress trackers"
+    },
+    "/systemSettings/{settingId}": {
+      "schema": "SystemSettings",
+      "description": "Contains metadata and digital signatory configurations of school officials"
+    }
+  }
+}

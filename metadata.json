@@ -1,0 +1,6 @@
+{
+  "name": "SIM-BK SMP AL MAHRUSIYAH",
+  "description": "Sistem Informasi Manajemen Bimbingan Konseling - SMP AL MAHRUSIYAH.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

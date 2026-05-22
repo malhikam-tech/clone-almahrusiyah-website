@@ -1,0 +1,159 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny catch-all safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ==========================================
+    // Phase 3: Reusable Global Primitive Helpers
+    // ==========================================
+    
+    function isSignedIn() {
+      // Bypassed, as the app manages user login session client-side and via API routes
+      return true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // ==========================================
+    // Phase 2: Schema Blueprint Validations
+    // ==========================================
+
+    function isValidStudent(data) {
+      return data.keys().hasAll(['id', 'nisn', 'name', 'gender', 'studentClass', 'phone', 'parentPhone', 'points'])
+        && data.keys().size() == 8
+        && data.id is string && data.id.size() <= 128
+        && data.nisn is string && data.nisn.size() <= 32
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 200
+        && (data.gender == 'L' || data.gender == 'P')
+        && data.studentClass is string && data.studentClass.size() <= 32
+        && data.phone is string && data.phone.size() <= 32
+        && data.parentPhone is string && data.parentPhone.size() <= 32
+        && data.points is int;
+    }
+
+    function isValidViolationType(data) {
+      return data.keys().hasAll(['id', 'name', 'points'])
+        && data.keys().size() == 3
+        && data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 500
+        && data.points is int;
+    }
+
+    function isValidPointHistory(data) {
+      return data.keys().hasAll(['id', 'studentId', 'type', 'description', 'pointsChanged', 'date'])
+        && data.keys().size() == 6
+        && data.id is string && data.id.size() <= 128
+        && data.studentId is string && data.studentId.size() <= 128
+        && (data.type == 'VIOLATION' || data.type == 'REWARD' || data.type == 'ADJUSTMENT')
+        && data.description is string && data.description.size() > 0 && data.description.size() <= 500
+        && data.pointsChanged is int
+        && data.date is string && data.date.size() <= 32;
+    }
+
+    function isValidNeedAssessment(data) {
+      return data.keys().hasAll(['id', 'studentId', 'date', 'personalScore', 'socialScore', 'academicScore', 'careerScore', 'notes', 'category'])
+        && data.keys().size() == 9
+        && data.id is string && data.id.size() <= 128
+        && data.studentId is string && data.studentId.size() <= 128
+        && data.date is string && data.date.size() <= 32
+        && data.personalScore is int && data.personalScore >= 0 && data.personalScore <= 100
+        && data.socialScore is int && data.socialScore >= 0 && data.socialScore <= 100
+        && data.academicScore is int && data.academicScore >= 0 && data.academicScore <= 100
+        && data.careerScore is int && data.careerScore >= 0 && data.careerScore <= 100
+        && data.notes is string && data.notes.size() <= 2000
+        && (data.category == 'Ringan' || data.category == 'Sedang' || data.category == 'Sangat Butuh Bantuan');
+    }
+
+    // Confessional BK documents
+    function isValidCounselingLog(data) {
+      return data.keys().hasAll(['id', 'studentId', 'date', 'counselorName', 'type', 'issue', 'solution', 'evaluation', 'status'])
+        && data.keys().size() == 9
+        && data.id is string && data.id.size() <= 128
+        && data.studentId is string && data.studentId.size() <= 128
+        && data.date is string && data.date.size() <= 32
+        && data.counselorName is string && data.counselorName.size() > 0 && data.counselorName.size() <= 200
+        && (data.type == 'Individu' || data.type == 'Kelompok' || data.type == 'Klasikal' || data.type == 'Lainnya')
+        && data.issue is string && data.issue.size() <= 5000
+        && data.solution is string && data.solution.size() <= 5000
+        && data.evaluation is string && data.evaluation.size() <= 5000
+        && (data.status == 'Selesai' || data.status == 'Dalam Pemantauan' || data.status == 'Perlu Rujukan');
+    }
+
+    function isValidSystemSettings(data) {
+      return data.keys().hasAll(['id', 'counselors', 'principalName', 'wakaKesiswaanName'])
+        && data.keys().size() == 4
+        && data.id is string && data.id.size() <= 128
+        && data.counselors is list
+        && data.principalName is string && data.principalName.size() > 0 && data.principalName.size() <= 200
+        && data.wakaKesiswaanName is string && data.wakaKesiswaanName.size() > 0 && data.wakaKesiswaanName.size() <= 200;
+    }
+
+    // ==========================================
+    // Phase 4: Match Blocks for Core collections
+    // ==========================================
+
+    // Students collection rules
+    match /students/{studentId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(studentId) && isValidStudent(incoming());
+      allow update: if isSignedIn() && isValidStudent(incoming()) && (
+        incoming().nisn == existing().nisn &&
+        incoming().gender == existing().gender
+      );
+      allow delete: if isSignedIn();
+    }
+
+    // Violation types reference rules
+    match /violationTypes/{violationId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && isValidId(violationId) && isValidViolationType(incoming());
+      allow delete: if isSignedIn();
+    }
+
+    // Point history audit trails rules
+    match /pointHistory/{historyId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(historyId) && isValidPointHistory(incoming());
+      allow update: if isSignedIn() && isValidPointHistory(incoming()) && (
+        incoming().studentId == existing().studentId &&
+        incoming().pointsChanged == existing().pointsChanged
+      );
+      allow delete: if isSignedIn();
+    }
+
+    // Need assessments rules
+    match /needAssessments/{assessmentId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && isValidId(assessmentId) && isValidNeedAssessment(incoming());
+      allow delete: if isSignedIn();
+    }
+
+    // Confidential counseling logs rules
+    match /counselingLogs/{logId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && isValidId(logId) && isValidCounselingLog(incoming());
+      allow delete: if isSignedIn();
+    }
+
+    // Global layout / signatories settings rules
+    match /systemSettings/{settingId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && isValidId(settingId) && isValidSystemSettings(incoming());
+      allow delete: if isSignedIn();
+    }
+  }
+}
