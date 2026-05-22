@@ -1,1 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0.1" />
+      <drop-shadow dx="2" dy="4" stdDeviation="3" flood-opacity="0.15"/>
+    </filter>
+  </defs>
 
+  <!-- Elegant Outer Shield/Circle -->
+  <rect x="8" y="8" width="112" height="112" rx="32" fill="url(#shieldGrad)" />
+  
+  <!-- Internal Gold Decorative Crest Circle -->
+  <circle cx="64" cy="64" r="44" fill="none" stroke="url(#goldGrad)" stroke-width="3" stroke-dasharray="4 2" />
+
+  <!-- Center Emblem: Wisdom Book & Protective Heart -->
+  <g transform="translate(64, 62)" filter="url(#shadow)">
+    <!-- Shielding Heart Behind (Transparent White Core + Gold Stroke) -->
+    <path d="M 0,-18 Q -15,-32 -26,-15 Q -32,2 -4,22 L 0,25 L 4,22 Q 32,2 26,-15 Q 15,-32 0,-18 Z" 
+          fill="none" stroke="url(#goldGrad)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+          
+    <!-- Open Book in Front -->
+    <!-- Left Page -->
+    <path d="M-22,-2 C-12,-8 -2,-8 0,-4 L0,16 C-2,12 -12,12 -22,16 Z" fill="#ffffff" />
+    <!-- Right Page -->
+    <path d="M22,-2 C12,-8 2,-8 0,-4 L0,16 C2,12 12,12 22,16 Z" fill="#ffffff" />
+    <!-- Spine / Center line -->
+    <line x1="0" y1="-4" x2="0" y2="18" stroke="#1e3a8a" stroke-width="2" />
+  </g>
+</svg>
